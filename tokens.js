@@ -1,5 +1,5 @@
 
-const TOKENS = {
+export default {
   keywords: [
     "auto",
     "break",
