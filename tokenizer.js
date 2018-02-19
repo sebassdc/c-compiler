@@ -1,20 +1,22 @@
 import TOKENS from './tokens.js'
 
+const isOperator = char => TOKENS.operators.map(e => e[0]).indexOf(char) > -1
+
 export default str => {
   let tokens = []
   let current = 0
   
   mainloop:
   while (current < str.length) {
-    console.log('flagwhile')
     let char = str[current]
+    // console.log("Char: ", char)
     
     // Preproccesor directive
     if (char === "#") {
       let value = ''
       let position = current + 0 // copy the value
       while (char !== "\n") {
-        if (current >= str.length) continue mainloop
+        if (current >= str.length) break mainloop
         value += char
         char = str[++current]
       }
@@ -27,15 +29,14 @@ export default str => {
       char = str[++current]
       continue
     }
-
+    else
     // NUMBERS
-    const NUMBERS = /[0-9]/
-    if (NUMBERS.test(char)) {
+    if (/[0-9]/.test(char)) {
       let floatFlag = false
       let value = ""
       let position = current + 0 // copy the value
       while (
-        (NUMBERS.test(char) || char === ".")
+        (/[0-9]/.test(char) || char === ".")
       ) {
         if (char === ".") {
           if (floatFlag) {
@@ -55,7 +56,7 @@ export default str => {
       })
       continue
     }
-
+    else
     // STRINGS
     if (char === '"') {
       let value = ''
@@ -76,10 +77,9 @@ export default str => {
       })
       continue
     }
-
+    else
     // IDENTIFIERS
-    const LETTERS = /[a-z]/i
-    if (LETTERS.test(char)) {
+    if (/[a-z]/i.test(char)) {
       let value = ''
       let position = current + 0 // copy the value
       do {
@@ -87,19 +87,19 @@ export default str => {
         char = str[++current]
         if (current >= str.length) continue mainloop
       } while (/[a-z]|[A-Z]|_|[0-9]/.test(char));
-      let type = (TOKENS.keywords.indexOf(value) > 0) ?
+      let type = (TOKENS.keywords.indexOf(value) > -1) ?
         'keyword' : 'identifier'
       tokens.push({
+        value,
         type,
         position,
         offset: value.length,
-        value
       })
       continue
     }
-
+    else
     // SEPARATORS
-    if (TOKENS.separators.indexOf(char) > 0) {
+    if (TOKENS.separators.indexOf(char) > -1) {
       tokens.push({
         value: char,
         type: "separator",
@@ -109,8 +109,40 @@ export default str => {
       current++
       continue
     }
+    else
+    // OPERATORS
+    if (isOperator(char)) {
+      let value = ""
+      const position = current + 0;
 
-    current++
+      const isDouble = TOKENS.operators.indexOf(char + str[current + 1]) > -1
+      if (isDouble) {
+        value =  char + str[current + 1]
+        current += 2
+      } else {
+        value = char + ""
+        current++
+      }
+      tokens.push({
+        value,
+        type: "operator",
+        position,
+        offset: value.length,
+      })
+      current++
+      continue
+    }
+    else
+    // WHITESPACE
+    if (/(\ )|(\n)|(\t)/g.test(char)) {
+      current++
+      continue
+    }
+    else {
+      const err = Error(`Custom Lexical error, at position ${current}\n Unexpected token: ${char}`)
+      console.log(err)
+      return err
+    }
   }
   return tokens
 }
