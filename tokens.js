@@ -33,6 +33,8 @@ export default {
     "void",
     "volatile",
     "while ",
+    "using",
+    "namespace"
   ],
   separators: [
     "{",
